@@ -35,7 +35,6 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
             Rd = struct.unpack('<f', f.read(4))[0]
             # 读取数据长度（假设数据为float32格式）
             data = np.fromfile(f, dtype=np.float32)
-        print(data.shape)
         
         # 假设ht_r和signal_cut_r各有160000个点
         ht_label = data[0:Ns:100]
@@ -120,12 +119,6 @@ if __name__ == '__main__':
     base_dir = r'E:\4.0Dr\WPDP\dataset\ht_denoise_log'
     datapth = os.path.join(base_dir, f"sig300-{htdname}-{j}.bin")
     data = read_ht_bin(datapth)
-    print(data['ht_label'].shape)
-    print(data['ht_input'].shape)
-    print(data['Ns'])
-    print(data['Sd'])
-    print(data['Rr'])
-    print(data['Rd'])
     
     # 使用新数据集类的示例
     dataset = HtDataset(base_dir)
