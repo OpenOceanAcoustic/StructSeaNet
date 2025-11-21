@@ -1,0 +1,8 @@
+{
+    "train": [
+        "E:\\4.0Dr\\WPDP\\dataset\\ht_simple\\sig300-HTD042-2"
+    ],
+    "test": [
+        "E:\\4.0Dr\\WPDP\\dataset\\ht_simple\\sig300-HTD042-2"
+    ]
+}
