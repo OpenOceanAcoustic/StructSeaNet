@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import struct
 from typing import Dict, Any, List
 import torch
-from torch.utils import data
+from torch.utils.data import Dataset, DataLoader
 
 def read_ht_bin(datapth: str) -> Dict[str, Any]:
     """
@@ -39,6 +39,10 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
         # 假设ht_r和signal_cut_r各有160000个点
         ht_label = data[0:Ns:100]
         ht_input = data[Ns:Ns*2:100]
+
+        # 归一化
+        ht_label = (ht_label - np.min(ht_label)) / (np.max(ht_label) - np.min(ht_label))
+        ht_input = (ht_input - np.min(ht_input)) / (np.max(ht_input) - np.min(ht_input))
         
         return {
             'Ns': Ns,
@@ -53,7 +57,7 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
         raise RuntimeError(f"读取文件 {datapth} 时出错: {e}")
     
 
-class HtDataset(data.Dataset):
+class HtDataset(Dataset):
     """HT数据集类"""
     
     def __init__(self, data_dir: str, file_list: List[str] = None):
