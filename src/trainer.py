@@ -147,30 +147,30 @@ class Trainer:
             self.val_losses.append(val_loss)
             print(f'验证损失: {val_loss:.6f}')
             
-            # # 保存最佳模型
-            # if val_loss < best_val_loss:
-            #     best_val_loss = val_loss
-            #     model_path = os.path.join(save_dir, f'best_model_epoch_{epoch+1}.pth')
-            #     torch.save({
-            #         'epoch': epoch+1,
-            #         'model_state_dict': self.model.state_dict(),
-            #         'optimizer_state_dict': self.optimizer.state_dict(),
-            #         'train_loss': train_loss,
-            #         'val_loss': val_loss,
-            #     }, model_path)
-            #     print(f'保存最佳模型: {model_path}')
+            # 保存最佳模型
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                model_path = os.path.join(save_dir, f'best_model_epoch_{epoch+1}.pth')
+                torch.save({
+                    'epoch': epoch+1,
+                    'model_state_dict': self.model.state_dict(),
+                    'optimizer_state_dict': self.optimizer.state_dict(),
+                    'train_loss': train_loss,
+                    'val_loss': val_loss,
+                }, model_path)
+                print(f'保存最佳模型: {model_path}')
             
-            # # 每10个epoch保存一次检查点
-            # if (epoch + 1) % 10 == 0:
-            #     checkpoint_path = os.path.join(save_dir, f'checkpoint_epoch_{epoch+1}.pth')
-            #     torch.save({
-            #         'epoch': epoch+1,
-            #         'model_state_dict': self.model.state_dict(),
-            #         'optimizer_state_dict': self.optimizer.state_dict(),
-            #         'train_losses': self.train_losses,
-            #         'val_losses': self.val_losses,
-            #     }, checkpoint_path)
-            #     print(f'保存检查点: {checkpoint_path}')
+            # 每10个epoch保存一次检查点
+            if (epoch + 1) % 10 == 0:
+                checkpoint_path = os.path.join(save_dir, f'checkpoint_epoch_{epoch+1}.pth')
+                torch.save({
+                    'epoch': epoch+1,
+                    'model_state_dict': self.model.state_dict(),
+                    'optimizer_state_dict': self.optimizer.state_dict(),
+                    'train_losses': self.train_losses,
+                    'val_losses': self.val_losses,
+                }, checkpoint_path)
+                print(f'保存检查点: {checkpoint_path}')
         
         print('\n训练完成!')
         
@@ -317,9 +317,10 @@ def main():
     # 创建数据集和数据加载器
     # 注意：请根据实际情况修改数据路径
     data_dir = r'E:\4.0Dr\WPDP\dataset\ht_simple'  # 请根据实际情况修改
+    split_json = r'..\split\thetruetrain.json'
     
     # 读取数据划分文件
-    with open('dataset_split.json', 'r') as f:
+    with open(split_json, 'r') as f:
         dataset_split = json.load(f)
         train_files = dataset_split['train']
         val_files = dataset_split['val']
@@ -338,7 +339,7 @@ def main():
     print(f'验证集大小: {len(val_dataset)}')
     print(f'测试集大小: {len(test_dataset)}')
     # 创建数据加载器
-    batch_size = 4  # 根据内存情况调整
+    batch_size = 16  # 根据内存情况调整
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -347,7 +348,7 @@ def main():
     print(f'训练批次数量: {len(train_loader)}, 验证批次数量: {len(val_loader)}, 测试批次数量: {len(test_loader)}')
     
     # 创建模型
-    model = Model(n_layers=2, channels_interval=24)
+    model = Model(n_layers=6, channels_interval=24)
     print(f'模型参数数量: {sum(p.numel() for p in model.parameters())}')
     
     # 创建损失函数和优化器
