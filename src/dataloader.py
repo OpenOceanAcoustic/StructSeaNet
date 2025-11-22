@@ -60,23 +60,14 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
 class HtDataset(Dataset):
     """HT数据集类"""
     
-    def __init__(self, data_dir: str, file_list: List[str] = None):
+    def __init__(self, file_path_list: List[str] = None):
         """
         初始化数据集
         
         参数:
-            data_dir: 数据文件所在的目录
-            file_list: 文件列表，如果为None，则使用目录中的所有.bin文件
+            file_path_list: 文件路径列表
         """
-        self.data_dir = data_dir
-        if file_list is None:
-            # 获取目录中所有的.bin文件
-            self.file_list = [f for f in os.listdir(data_dir) if f.endswith('.bin')]
-        else:
-            self.file_list = file_list
-            
-        # 确保文件路径完整
-        self.file_paths = [os.path.join(self.data_dir, f) for f in self.file_list]
+        self.file_paths = file_path_list
     
     def __len__(self) -> int:
         """返回数据集大小"""

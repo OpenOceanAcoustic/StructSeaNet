@@ -23,3 +23,4 @@ TestResults.xml
 src/__pycache__
 src/checkpoints
 split/
+results/

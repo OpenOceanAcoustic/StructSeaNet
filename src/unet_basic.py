@@ -75,22 +75,27 @@ class Model(nn.Module):
         )
 
     def forward(self, input):
+        # print(f"输入层维度: {input.shape}")
         tmp = []
         o = input
 
         # Down Sampling
         for i in range(self.n_layers):
             o = self.encoder[i](o)
+            # print(f"下采样层 {i+1} 卷积后维度: {o.shape}")
             tmp.append(o)
             # [batch_size, T // 2, channels]
             o = o[:, :, ::2]
+            # print(f"下采样层 {i+1} 降采样后维度: {o.shape}")
 
         o = self.middle(o)
+        # print(f"中间层维度: {o.shape}")
 
         # Up Sampling
         for i in range(self.n_layers):
             # [batch_size, T * 2, channels]
             o = F.interpolate(o, scale_factor=2, mode="linear", align_corners=True)
+            # print(f"上采样层 {i+1} 插值后维度: {o.shape}")
             # Skip Connection
             # 确保尺寸匹配
             tmp_out = tmp[self.n_layers - i - 1]
@@ -100,7 +105,9 @@ class Model(nn.Module):
                 o = o[:, :, :min_len]
                 tmp_out = tmp_out[:, :, :min_len]
             o = torch.cat([o, tmp_out], dim=1)
+            # print(f"上采样层 {i+1} 跳跃连接后维度: {o.shape}")
             o = self.decoder[i](o)
+            # print(f"上采样层 {i+1} 卷积后维度: {o.shape}")
 
         # Final layer - ensure size matching with input
         if o.shape[2] != input.shape[2]:
@@ -109,12 +116,14 @@ class Model(nn.Module):
             input = input[:, :, :min_len]
             
         o = torch.cat([o, input], dim=1)
+        # print(f"最终层拼接后维度: {o.shape}")
         o = self.out(o)
+        # print(f"输出层维度: {o.shape}")
         return o
 
 if __name__ == '__main__':
     # 创建模型实例
-    model = Model()
+    model = Model(n_layers=8, channels_interval=24)
     
     # 创建测试数据，维度为 torch.Size([1, 1600])
     # 假设数据形状为 [batch_size, sequence_length] = [1, 1600]
