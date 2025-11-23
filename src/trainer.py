@@ -453,7 +453,7 @@ def main():
     
     # 创建数据集和数据加载器
     # 注意：请根据实际情况修改数据路径
-    split_json = r'..\split\dataset_simple.json'
+    split_json = r'..\split\theTrueTrain.json'
     batch_size = 16  # 根据内存情况调整
     model_n_layers = 8
     model_channels_interval = 24

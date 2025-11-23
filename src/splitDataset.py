@@ -6,8 +6,8 @@ import random
 random.seed(42)
 
 # 定义文件夹路径和输出文件路径
-folder_path = r"E:\4.0Dr\WPDP\dataset\ht_denoise_log"
-output_file = "../split/1_10rep.json"
+folder_path = r"..\datasets\ht_denoise_log_32Hz"
+output_file = "../split/theTrueTrain.json"
 
 # 获取文件夹中所有.bin文件的路径
 bin_files = []
@@ -27,18 +27,18 @@ random.shuffle(bin_files)
 
 # 计算划分比例（7:1:2）
 total = len(bin_files)
-train_size = int(total * 0.07)
-val_size = int(total * 0.01)
+train_size = int(total * 0.7)
+val_size = int(total * 0.1)
 # 测试集大小为剩余部分（确保总和正确）
-test_size = int(total * 0.02) #total - train_size - val_size
+test_size = int(total * 0.2) #total - train_size - val_size
 
 # 划分数据集
 train_files = bin_files[:train_size]
-# val_files = bin_files[train_size:train_size + val_size]
+val_files = bin_files[train_size:train_size + val_size]
 # test_files = bin_files[train_size + val_size:]
-# test_files = bin_files[train_size + val_size:train_size + val_size + test_size]
-val_files = bin_files[:val_size]
-test_files = bin_files[:test_size]
+test_files = bin_files[train_size + val_size:train_size + val_size + test_size]
+# val_files = bin_files[:val_size]
+# test_files = bin_files[:test_size]
 
 # 构建JSON数据结构
 data = {
