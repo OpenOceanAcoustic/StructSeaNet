@@ -55,7 +55,5 @@ ph_log_sp = fread(fid, [NS2,1], 'float32');
 fclose(fid);
 figure;
 plot(ps_log_sp);
-title('ps_log_sp');
-figure;
+hold on
 plot(ph_log_sp);
-title('ph_log_sp');

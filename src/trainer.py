@@ -3,11 +3,13 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import os
+import scipy.io
 import json
 import numpy as np
 from typing import Dict, Any
 import matplotlib.pyplot as plt
 import datetime
+import re
 import yaml
 
 # 导入自定义模块
@@ -334,6 +336,10 @@ class Trainer:
                 test_results_path = os.path.join(timestamp_save_dir, 'test_results.npz')
                 np.savez(test_results_path, predictions=predictions, targets=targets_list)
                 print(f'测试结果已保存到: {test_results_path}')
+                # 转为.mat文件
+                mat_file_path = os.path.join(timestamp_save_dir, 'test_results.mat')
+                scipy.io.savemat(mat_file_path, {'predictions': predictions, 'targets': targets_list})
+                print(f'测试结果已保存到: {mat_file_path}')
             
             return {
                 'test_loss': avg_loss,
@@ -414,27 +420,27 @@ class Trainer:
         
         plt.show()
         
-        # 绘制散点图：预测值 vs 真实值
-        plt.figure(figsize=(8, 6))
-        plt.scatter(targets.flatten(), predictions.flatten(), alpha=0.5)
-        plt.plot([targets.min(), targets.max()], [targets.min(), targets.max()], 'r--', lw=2)
-        plt.xlabel('真实值')
-        plt.ylabel('预测值')
-        plt.title('预测值 vs 真实值')
-        plt.grid(True)
+        # # 绘制散点图：预测值 vs 真实值
+        # plt.figure(figsize=(8, 6))
+        # plt.scatter(targets.flatten(), predictions.flatten(), alpha=0.5)
+        # plt.plot([targets.min(), targets.max()], [targets.min(), targets.max()], 'r--', lw=2)
+        # plt.xlabel('真实值')
+        # plt.ylabel('预测值')
+        # plt.title('预测值 vs 真实值')
+        # plt.grid(True)
         
-        # 如果需要保存到results文件夹
-        if save_to_results:
-            # 创建基于时间戳的结果保存目录
-            timestamp_save_dir = os.path.join('../results', self.timestamp)
-            os.makedirs(timestamp_save_dir, exist_ok=True)
+        # # 如果需要保存到results文件夹
+        # if save_to_results:
+        #     # 创建基于时间戳的结果保存目录
+        #     timestamp_save_dir = os.path.join('../results', self.timestamp)
+        #     os.makedirs(timestamp_save_dir, exist_ok=True)
             
-            # 保存散点图
-            scatter_plot_path = os.path.join(timestamp_save_dir, 'scatter_plot.png')
-            plt.savefig(scatter_plot_path, dpi=300, bbox_inches='tight')
-            print(f'散点图已保存到: {scatter_plot_path}')
+        #     # 保存散点图
+        #     scatter_plot_path = os.path.join(timestamp_save_dir, 'scatter_plot.png')
+        #     plt.savefig(scatter_plot_path, dpi=300, bbox_inches='tight')
+        #     print(f'散点图已保存到: {scatter_plot_path}')
         
-        plt.show()
+        # plt.show()
         
         # 打印测试指标
         print(f"测试损失: {test_results['test_loss']:.6f}")
@@ -453,6 +459,8 @@ def main():
     
     # 创建数据集和数据加载器
     # 注意：请根据实际情况修改数据路径
+    test_mode = True
+    model_checkpoint_path = r'../results/20251122_130323/checkpoints/checkpoint_epoch_300.pth'
     split_json = r'..\split\theTrueTrain.json'
     batch_size = 16  # 根据内存情况调整
     model_n_layers = 8
@@ -501,45 +509,82 @@ def main():
         device=device
     )
     
-    # 保存超参数到YAML文件
-    hyperparameters = {
-        'split_json': split_json,
-        'batch_size': batch_size,
-        'model_n_layers': model_n_layers,
-        'model_channels_interval': model_channels_interval,
-        'optim_lr': optim_lr,
-        'train_num_epochs': train_num_epochs,
-        'device': str(device)
-    }
-    
-    # 创建基于时间戳的结果保存目录
-    timestamp_save_dir = os.path.join('../results', trainer.timestamp)
-    os.makedirs(timestamp_save_dir, exist_ok=True)
-    
-    # 保存超参数到YAML文件
-    hyperparams_path = os.path.join(timestamp_save_dir, 'train.yaml')
-    with open(hyperparams_path, 'w', encoding='utf-8') as f:
-        yaml.dump(hyperparameters, f, allow_unicode=True, default_flow_style=False)
-    print(f'超参数已保存到: {hyperparams_path}')
-    
-    # 开始训练
-    trainer.train(num_epochs=train_num_epochs, save_dir='./checkpoints')
-    
-    # 绘制损失曲线
-    trainer.plot_losses(save_to_results=True)
-    
-    # 保存损失数据
-    trainer.save_losses()
-    
-    # 在测试集上进行测试
-    print("\n=== 开始测试 ===")
-    test_results = trainer.test(test_loader, save_to_results=True)
-    print(f"测试完成:")
-    print(f"  测试损失: {test_results['test_loss']:.6f}")
-    print(f"  平均绝对误差 (MAE): {test_results['test_mae']:.6f}")
-    
-    # 绘制测试结果
-    trainer.plot_test_results(test_results, save_to_results=True)
+    if test_mode:
+        # 测试模式：加载预训练模型权重进行测试
+        print("=== 测试模式 ===")
+        
+        # 检查模型文件是否存在
+        if not os.path.exists(model_checkpoint_path):
+            raise FileNotFoundError(f"模型文件不存在: {model_checkpoint_path}")
+        
+        # 加载模型权重
+        checkpoint = torch.load(model_checkpoint_path, map_location=device)
+        trainer.model.load_state_dict(checkpoint['model_state_dict'])
+        print(f"已加载模型权重: {model_checkpoint_path}")
+        
+        # 提取时间戳用于创建结果保存目录
+        # 从路径中提取时间戳，例如从 '../results/20251122_130323/checkpoint_epoch_300.pth' 提取 '20251122_130323'
+        timestamp_match = re.search(r'/results/(\d+_\d+)/', model_checkpoint_path)
+        if timestamp_match:
+            trainer.timestamp = timestamp_match.group(1)
+        else:
+            # 如果无法从路径提取时间戳，则使用当前时间戳
+            trainer.timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        print(f"使用时间戳: {trainer.timestamp}")
+        
+        # 在测试集上进行测试
+        print("\n=== 开始测试 ===")
+        test_results = trainer.test(test_loader, save_to_results=True)
+        print(f"测试完成:")
+        print(f"  测试损失: {test_results['test_loss']:.6f}")
+        print(f"  平均绝对误差 (MAE): {test_results['test_mae']:.6f}")
+        
+        # 绘制测试结果
+        trainer.plot_test_results(test_results, save_to_results=True)
+    else:
+        # 训练模式
+        print("=== 训练模式 ===")
+        
+        # 保存超参数到YAML文件
+        hyperparameters = {
+            'split_json': split_json,
+            'batch_size': batch_size,
+            'model_n_layers': model_n_layers,
+            'model_channels_interval': model_channels_interval,
+            'optim_lr': optim_lr,
+            'train_num_epochs': train_num_epochs,
+            'device': str(device)
+        }
+        
+        # 创建基于时间戳的结果保存目录
+        timestamp_save_dir = os.path.join('../results', trainer.timestamp)
+        os.makedirs(timestamp_save_dir, exist_ok=True)
+        
+        # 保存超参数到YAML文件
+        hyperparams_path = os.path.join(timestamp_save_dir, 'train.yaml')
+        with open(hyperparams_path, 'w', encoding='utf-8') as f:
+            yaml.dump(hyperparameters, f, allow_unicode=True, default_flow_style=False)
+        print(f'超参数已保存到: {hyperparams_path}')
+        
+        # 开始训练
+        trainer.train(num_epochs=train_num_epochs, save_dir='./checkpoints')
+        
+        # 绘制损失曲线
+        trainer.plot_losses(save_to_results=True)
+        
+        # 保存损失数据
+        trainer.save_losses()
+        
+        # 在测试集上进行测试
+        print("\n=== 开始测试 ===")
+        test_results = trainer.test(test_loader, save_to_results=True)
+        print(f"测试完成:")
+        print(f"  测试损失: {test_results['test_loss']:.6f}")
+        print(f"  平均绝对误差 (MAE): {test_results['test_mae']:.6f}")
+        
+        # 绘制测试结果
+        trainer.plot_test_results(test_results, save_to_results=True)
 
 
 if __name__ == '__main__':
