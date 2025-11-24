@@ -24,9 +24,13 @@ for j = 1:Nj
     % 抽样
     ps_log_sp = ps_log(1:100:end);
     ph_log_sp = ph_log(1:100:end);
+    max_ps_log_sp = max(ps_log_sp);
+    min_ps_log_sp = min(ps_log_sp);
+    max_ph_log_sp = max(ph_log_sp);
+    min_ph_log_sp = min(ph_log_sp);
     % 归一
-    ps_log_sp = (ps_log_sp - min(ps_log_sp)) / (max(ps_log_sp) - min(ps_log_sp));
-    ph_log_sp = (ph_log_sp - min(ph_log_sp)) / (max(ph_log_sp) - min(ph_log_sp));
+    ps_log_sp = (ps_log_sp - min_ps_log_sp) / (max_ps_log_sp - min_ps_log_sp);
+    ph_log_sp = (ph_log_sp - min_ph_log_sp) / (max_ph_log_sp - min_ph_log_sp);
 
     NS2 = length(ps_log_sp);
     fid2 = fopen(fullfile('../datasets/ht_denoise_log_32Hz', htdname), 'wb');
@@ -34,14 +38,17 @@ for j = 1:Nj
     fwrite(fid2, Sd, 'float32');
     fwrite(fid2, Rr, 'float32');
     fwrite(fid2, Rd, 'float32');
+    fwrite(fid2, max_ps_log_sp, 'float32');
+    fwrite(fid2, min_ps_log_sp, 'float32');
+    fwrite(fid2, max_ph_log_sp, 'float32');
+    fwrite(fid2, min_ph_log_sp, 'float32');
     fwrite(fid2, ps_log_sp, 'float32');
     fwrite(fid2, ph_log_sp, 'float32');
     fclose(fid2);
-
 end
 
 %% 测试读取
-htdname = 'HTD042';
+htdname = 'HTD019';
 j = 1;
 base_dir = '../datasets/ht_denoise_log_32Hz';
 datapth = fullfile(base_dir, sprintf("sig300-%s-%d.bin", htdname, j));
@@ -50,6 +57,10 @@ NS2 = fread(fid, 1, 'uint32');
 Sd = fread(fid, 1, 'float32');
 Rr = fread(fid, 1, 'float32');
 Rd = fread(fid, 1, 'float32');
+max_ps_log_sp = fread(fid, 1, 'float32');
+min_ps_log_sp = fread(fid, 1, 'float32');
+max_ph_log_sp = fread(fid, 1, 'float32');
+min_ph_log_sp = fread(fid, 1, 'float32');
 ps_log_sp = fread(fid, [NS2,1], 'float32');
 ph_log_sp = fread(fid, [NS2,1], 'float32');
 fclose(fid);
@@ -57,3 +68,21 @@ figure;
 plot(ps_log_sp);
 hold on
 plot(ph_log_sp);
+
+% 反归一
+ps_log_sp = ps_log_sp * (max_ps_log_sp - min_ps_log_sp) + min_ps_log_sp;
+ph_log_sp = ph_log_sp * (max_ph_log_sp - min_ph_log_sp) + min_ph_log_sp;
+% 反转换
+ps = 10.^(ps_log_sp/20) - 1;
+ph = 10.^(ph_log_sp/20) - 1;
+
+figure;
+plot(pre_ht);
+hold on
+plot(1:100:160000,ph);
+
+figure;
+plot(preprocessed_signal);
+hold on
+plot(1:100:160000,ps);
+plot(signal_cut_r)

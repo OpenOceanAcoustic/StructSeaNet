@@ -283,12 +283,33 @@ class Trainer:
         num_batches = 0
         predictions = []
         targets_list = []
+        Sd_list = np.array([])
+        Rr_list = np.array([])
+        Rd_list = np.array([])
+        max_ps_log_sp_list = np.array([])
+        min_ps_log_sp_list = np.array([])
+        max_ph_log_sp_list = np.array([])
+        min_ph_log_sp_list = np.array([])
         
         with torch.no_grad():  # 禁用梯度计算
             for batch_data in test_loader:
                 # 获取输入和标签数据
                 inputs = batch_data['ht_input'].to(self.device)
                 targets = batch_data['ht_label'].to(self.device)
+                Sd = batch_data['Sd']
+                Rr = batch_data['Rr']
+                Rd = batch_data['Rd']
+                max_ps_log_sp = batch_data['max_ps_log_sp']
+                min_ps_log_sp = batch_data['min_ps_log_sp']
+                max_ph_log_sp = batch_data['max_ph_log_sp']
+                min_ph_log_sp = batch_data['min_ph_log_sp']
+                Sd_list = np.append(Sd_list, Sd)
+                Rr_list = np.append(Rr_list, Rr)
+                Rd_list = np.append(Rd_list, Rd)
+                max_ps_log_sp_list = np.append(max_ps_log_sp_list, max_ps_log_sp)
+                min_ps_log_sp_list = np.append(min_ps_log_sp_list, min_ps_log_sp)
+                max_ph_log_sp_list = np.append(max_ph_log_sp_list, max_ph_log_sp)
+                min_ph_log_sp_list = np.append(min_ph_log_sp_list, min_ph_log_sp)
                 
                 # 前向传播
                 outputs = self.model(inputs)
@@ -334,11 +355,17 @@ class Trainer:
                 
                 # 保存预测结果和真实标签
                 test_results_path = os.path.join(timestamp_save_dir, 'test_results.npz')
-                np.savez(test_results_path, predictions=predictions, targets=targets_list)
+                np.savez(test_results_path, predictions=predictions, targets=targets_list,
+                         Sd=Sd_list, Rr=Rr_list, Rd=Rd_list,
+                         max_ps_log_sp=max_ps_log_sp_list, min_ps_log_sp=min_ps_log_sp_list,
+                         max_ph_log_sp=max_ph_log_sp_list, min_ph_log_sp=min_ph_log_sp_list)
                 print(f'测试结果已保存到: {test_results_path}')
                 # 转为.mat文件
                 mat_file_path = os.path.join(timestamp_save_dir, 'test_results.mat')
-                scipy.io.savemat(mat_file_path, {'predictions': predictions, 'targets': targets_list})
+                scipy.io.savemat(mat_file_path, {'predictions': predictions, 'targets': targets_list,
+                                                 'Sd': Sd_list, 'Rr': Rr_list, 'Rd': Rd_list,
+                                                 'max_ps_log_sp': max_ps_log_sp_list, 'min_ps_log_sp': min_ps_log_sp_list,
+                                                 'max_ph_log_sp': max_ph_log_sp_list, 'min_ph_log_sp': min_ph_log_sp_list})
                 print(f'测试结果已保存到: {mat_file_path}')
             
             return {

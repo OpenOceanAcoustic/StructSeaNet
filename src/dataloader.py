@@ -24,13 +24,15 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
     try:
         # 读取二进制文件
         with open(datapth, 'rb') as f:
-            # 跳过前12字节
             Ns = struct.unpack('<I', f.read(4))[0]  # '<' 表示小端字节序（MATLAB默认），'I' 对应 uint32
-
             # 读取 float32 类型数据（对应 MATLAB 的 'float32'）
             Sd = struct.unpack('<f', f.read(4))[0]  # '<' 小端字节序，'f' 对应 float32
             Rr = struct.unpack('<f', f.read(4))[0]
             Rd = struct.unpack('<f', f.read(4))[0]
+            max_ps_log_sp = struct.unpack('<f', f.read(4))[0]
+            min_ps_log_sp = struct.unpack('<f', f.read(4))[0]
+            max_ph_log_sp = struct.unpack('<f', f.read(4))[0]
+            min_ph_log_sp = struct.unpack('<f', f.read(4))[0]
             # 读取数据长度（假设数据为float32格式）
             data = np.fromfile(f, dtype=np.float32)
         
@@ -43,6 +45,10 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
             'Sd': Sd,
             'Rr': Rr,
             'Rd': Rd,
+            'max_ps_log_sp': max_ps_log_sp,
+            'min_ps_log_sp': min_ps_log_sp,
+            'max_ph_log_sp': max_ph_log_sp,
+            'min_ph_log_sp': min_ph_log_sp,
             'ht_label': ht_label,
             'ht_input': ht_input
         }
@@ -97,7 +103,11 @@ class HtDataset(Dataset):
             'Ns': data_dict['Ns'],
             'Sd': data_dict['Sd'],
             'Rr': data_dict['Rr'],
-            'Rd': data_dict['Rd']
+            'Rd': data_dict['Rd'],
+            'max_ps_log_sp': data_dict['max_ps_log_sp'],
+            'min_ps_log_sp': data_dict['min_ps_log_sp'],
+            'max_ph_log_sp': data_dict['max_ph_log_sp'],
+            'min_ph_log_sp': data_dict['min_ph_log_sp'],
         }
 
 
