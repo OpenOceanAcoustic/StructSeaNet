@@ -25,3 +25,4 @@ src/checkpoints
 split/
 results/
 datasets/
+.trae/

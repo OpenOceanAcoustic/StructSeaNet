@@ -50,14 +50,15 @@ envfil = 'MunkB_Arr';
 
 load("G:\试验数据处理\西太\O1T1低频拖曳\ReceiveSigInfo.mat");
 load("G:\试验数据处理\西太\O1T1低频拖曳\O1T1低频拖曳\BasicInfo-太平洋.mat");
-
-St_resample = resample(St, 1, 2);
+load("filter.mat");
 
 load("G:\试验数据处理\西太\O1T1低频拖曳\O1T1低频拖曳\sig300.mat");
+St_resample = resample(St, 1, 2);
 fs = 32000;
 T = 50;
 N = fs*T;
 fk = (0:N-1)/N*fs;
+tk = (0:N-1)/fs;
 jsonStr = fileread('..\split\theTrueTrain.json');
 jsonData = jsondecode(jsonStr);
 for i = 1: length(jsonData.test)
@@ -79,10 +80,15 @@ for i = 1: length(jsonData.test)
     ht_r = fread(fid, [Ns,1], 'float32');
     fclose(fid);
     pred_log = squeeze(predictions(i,:,:));
+    ps_max_log = max_ps_log_sp(i);
+    ps_min_log = min_ps_log_sp(i);
+    ph_max_log = max_ph_log_sp(i);
+    ph_min_log = min_ph_log_sp(i);
     ph_log_sp = pred_log * (ph_max_log - ph_min_log) + ph_min_log;
+
     % 反转换
     ph = double(10.^(ph_log_sp/20) - 1);
-    [A,index] = findpeaks(ph,'MinPeakHeight',0.5);
+    [A,index] = findpeaks(ph,'MinPeakHeight',max(ph)/10);
     
     st_fft = fft(St_resample, N);
     tau = index / 32;
@@ -92,6 +98,9 @@ for i = 1: length(jsonData.test)
 
     yttt_scale = (yttt - mean(yttt))/max(abs(yttt - mean(yttt)));
     load(sprintf("G:/试验数据处理/西太/O1T1低频拖曳/1-原始数据截取信号/%s/sig300-%s-%s.mat", HTDstr, HTDstr, jstr));
+    % signal_cut = fun_BandFilter(signal_cut);
+    signal_cut = (signal_cut - mean(signal_cut))/max(abs(signal_cut - mean(signal_cut)));
+    signal_cut = filter(Num, 1, signal_cut);
     signal_cut_scale = (signal_cut - mean(signal_cut))/max(abs(signal_cut - mean(signal_cut)));
 
     figure;

@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import datetime
 import re
 import yaml
+import argparse
 
 # 导入自定义模块
 from unet_basic import Model
@@ -479,6 +480,22 @@ def main():
     plt.rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体
     plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
+    # 创建命令行参数解析器
+    parser = argparse.ArgumentParser(description='UNet模型训练和测试')
+    
+    # 添加超参数命令行参数
+    parser.add_argument('--test_mode', type=bool, default=True, help='是否为测试模式')
+    parser.add_argument('--model_checkpoint_path', type=str, default=r'../results/20251122_130323/checkpoints/checkpoint_epoch_300.pth', help='预训练模型路径')
+    parser.add_argument('--split_json', type=str, default=r'..\split\theTrueTrain.json', help='数据划分文件路径')
+    parser.add_argument('--batch_size', type=int, default=16, help='训练批次大小')
+    parser.add_argument('--model_n_layers', type=int, default=8, help='UNet模型的层数')
+    parser.add_argument('--model_channels_interval', type=int, default=24, help='模型通道间隔')
+    parser.add_argument('--optim_lr', type=float, default=1e-3, help='优化器学习率')
+    parser.add_argument('--train_num_epochs', type=int, default=300, help='训练轮数')
+    
+    # 解析命令行参数
+    args = parser.parse_args()
+
     """主函数，演示如何使用训练器"""
     # 设置设备
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -486,14 +503,14 @@ def main():
     
     # 创建数据集和数据加载器
     # 注意：请根据实际情况修改数据路径
-    test_mode = True
-    model_checkpoint_path = r'../results/20251122_130323/checkpoints/checkpoint_epoch_300.pth'
-    split_json = r'..\split\theTrueTrain.json'
-    batch_size = 16  # 根据内存情况调整
-    model_n_layers = 8
-    model_channels_interval = 24
-    optim_lr = 1e-3
-    train_num_epochs = 300
+    test_mode = args.test_mode
+    model_checkpoint_path = args.model_checkpoint_path
+    split_json = args.split_json
+    batch_size = args.batch_size  # 根据内存情况调整
+    model_n_layers = args.model_n_layers
+    model_channels_interval = args.model_channels_interval
+    optim_lr = args.optim_lr
+    train_num_epochs = args.train_num_epochs
 
     # 读取数据划分文件
     with open(split_json, 'r') as f:
