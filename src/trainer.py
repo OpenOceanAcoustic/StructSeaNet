@@ -484,7 +484,7 @@ def main():
     parser = argparse.ArgumentParser(description='UNet模型训练和测试')
     
     # 添加超参数命令行参数
-    parser.add_argument('--test_mode', type=bool, default=True, help='是否为测试模式')
+    parser.add_argument('--test_mode', type=bool, default=False, help='是否为测试模式')
     parser.add_argument('--model_checkpoint_path', type=str, default=r'../results/20251122_130323/checkpoints/checkpoint_epoch_300.pth', help='预训练模型路径')
     parser.add_argument('--split_json', type=str, default=r'..\split\theTrueTrain.json', help='数据划分文件路径')
     parser.add_argument('--batch_size', type=int, default=16, help='训练批次大小')

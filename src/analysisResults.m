@@ -65,6 +65,9 @@ for i = 1: length(jsonData.test)
     testBinPath = jsonData.test{i};
     strSplit = split(testBinPath, '\');
     htdname = strSplit{end};
+    if ~contains(htdname,'HTD256')
+        continue;
+    end
     
     strSplit = split(htdname, '-');
     HTDstr = strSplit{2};
@@ -88,11 +91,15 @@ for i = 1: length(jsonData.test)
 
     % 反转换
     ph = double(10.^(ph_log_sp/20) - 1);
+    ph_re = resample(ph, 1000, 1);
+    ph_cos = ph_re.' .* exp(1j * 2* pi*300*tk);
     [A,index] = findpeaks(ph,'MinPeakHeight',max(ph)/10);
     
     st_fft = fft(St_resample, N);
     tau = index / 32;
-    ykkk = st_fft .* (A.' * exp(-1j*2*pi*tau * fk));
+    p_fft = fft(ph_cos, N);
+    % ykkk = st_fft .* (A.' * exp(-1j*2*pi*tau * fk));
+    ykkk = st_fft .* p_fft;
    
     yttt = ifft(ykkk, 'symmetric');
 
@@ -114,6 +121,7 @@ for i = 1: length(jsonData.test)
     plot(tk, yttt_scale)
     xlabel('Time (s)')
     ylabel('Amplitude')
-    saveas(gcf, sprintf('../results/20251122_130323/figs_td/pred_linear_%d.png', i));
+    saveas(gcf, sprintf('../results/20251122_130323/figs_td2/pred_linear_%d.png', i));
+    % saveas(gcf, sprintf('../results/20251122_130323/figs_td/pred_linear_%d.fig', i));
     close(gcf);
 end
