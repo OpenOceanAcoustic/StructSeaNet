@@ -91,15 +91,17 @@ for i = 1: length(jsonData.test)
 
     % 反转换
     ph = double(10.^(ph_log_sp/20) - 1);
-    ph_re = resample(ph, 1000, 1);
-    ph_cos = ph_re.' .* exp(1j * 2* pi*300*tk);
-    [A,index] = findpeaks(ph,'MinPeakHeight',max(ph)/10);
+    % ph_re = resample(ph, 1000, 1);
+    % ph_cos = ph_re.' .* exp(1j * 2* pi*300*tk);
+    [A,index] = findpeaks(ph,'MinPeakHeight',max(ph)/100);
     
     st_fft = fft(St_resample, N);
     tau = index / 32;
-    p_fft = fft(ph_cos, N);
-    % ykkk = st_fft .* (A.' * exp(-1j*2*pi*tau * fk));
-    ykkk = st_fft .* p_fft;
+    % p_fft = fft(ph_cos, N);
+    ykkk = st_fft .* (A.' * exp(-1j*2*pi*tau * fk));
+    ykkk(fk<250) = 0;
+    ykkk(fk>350) = 0;
+    % ykkk = st_fft .* p_fft;
    
     yttt = ifft(ykkk, 'symmetric');
 
