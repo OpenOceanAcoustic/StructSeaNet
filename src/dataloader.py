@@ -11,12 +11,10 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
     读取HT二进制文件
     
     参数:
-        htdname: HT文件名
-        j: 索引
-        base_dir: 基础目录
+        datapth: HT文件路径
     
     返回:
-        Dict[str, Any]: 包含ht_r和signal_cut_r的字典
+        Dict[str, Any]: 包含ht_label和ht_input等数据的字典
     """
     
     # 检查文件是否存在
@@ -26,33 +24,35 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
     try:
         # 读取二进制文件
         with open(datapth, 'rb') as f:
-            # 跳过前12字节
             Ns = struct.unpack('<I', f.read(4))[0]  # '<' 表示小端字节序（MATLAB默认），'I' 对应 uint32
-    
             # 读取 float32 类型数据（对应 MATLAB 的 'float32'）
             Sd = struct.unpack('<f', f.read(4))[0]  # '<' 小端字节序，'f' 对应 float32
             Rr = struct.unpack('<f', f.read(4))[0]
             Rd = struct.unpack('<f', f.read(4))[0]
+            max_ps_log_sp = struct.unpack('<f', f.read(4))[0]
+            min_ps_log_sp = struct.unpack('<f', f.read(4))[0]
+            max_ph_log_sp = struct.unpack('<f', f.read(4))[0]
+            min_ph_log_sp = struct.unpack('<f', f.read(4))[0]
             # 读取数据长度（假设数据为float32格式）
             data = np.fromfile(f, dtype=np.float32)
         
-        # 假设ht_r和signal_cut_r各有160000个点
-        ht_label = data[0:Ns:100]
-        ht_input = data[Ns:Ns*2:100]
-
-        # 归一化
-        ht_label = (ht_label - np.min(ht_label)) / (np.max(ht_label) - np.min(ht_label))
-        ht_input = (ht_input - np.min(ht_input)) / (np.max(ht_input) - np.min(ht_input))
+        # 假设ht_r和signal_cut_r各有Ns个点
+        ht_label = data[0:Ns]
+        ht_input = data[Ns:Ns*2]
         
         return {
             'Ns': Ns,
             'Sd': Sd,
             'Rr': Rr,
             'Rd': Rd,
+            'max_ps_log_sp': max_ps_log_sp,
+            'min_ps_log_sp': min_ps_log_sp,
+            'max_ph_log_sp': max_ph_log_sp,
+            'min_ph_log_sp': min_ph_log_sp,
             'ht_label': ht_label,
             'ht_input': ht_input
         }
-        
+    
     except Exception as e:
         raise RuntimeError(f"读取文件 {datapth} 时出错: {e}")
     
@@ -60,23 +60,14 @@ def read_ht_bin(datapth: str) -> Dict[str, Any]:
 class HtDataset(Dataset):
     """HT数据集类"""
     
-    def __init__(self, data_dir: str, file_list: List[str] = None):
+    def __init__(self, file_path_list: List[str] = None):
         """
         初始化数据集
         
         参数:
-            data_dir: 数据文件所在的目录
-            file_list: 文件列表，如果为None，则使用目录中的所有.bin文件
+            file_path_list: 文件路径列表
         """
-        self.data_dir = data_dir
-        if file_list is None:
-            # 获取目录中所有的.bin文件
-            self.file_list = [f for f in os.listdir(data_dir) if f.endswith('.bin')]
-        else:
-            self.file_list = file_list
-            
-        # 确保文件路径完整
-        self.file_paths = [os.path.join(self.data_dir, f) for f in self.file_list]
+        self.file_paths = file_path_list
     
     def __len__(self) -> int:
         """返回数据集大小"""
@@ -112,7 +103,11 @@ class HtDataset(Dataset):
             'Ns': data_dict['Ns'],
             'Sd': data_dict['Sd'],
             'Rr': data_dict['Rr'],
-            'Rd': data_dict['Rd']
+            'Rd': data_dict['Rd'],
+            'max_ps_log_sp': data_dict['max_ps_log_sp'],
+            'min_ps_log_sp': data_dict['min_ps_log_sp'],
+            'max_ph_log_sp': data_dict['max_ph_log_sp'],
+            'min_ph_log_sp': data_dict['min_ph_log_sp'],
         }
 
 
@@ -120,12 +115,20 @@ if __name__ == '__main__':
     # 原始测试代码
     htdname = 'HTD042'
     j = 1
-    base_dir = r'E:\4.0Dr\WPDP\dataset\ht_denoise_log'
+    base_dir = r'..\datasets\ht_denoise_log_32Hz'
     datapth = os.path.join(base_dir, f"sig300-{htdname}-{j}.bin")
+    print(datapth)
     data = read_ht_bin(datapth)
     
     # 使用新数据集类的示例
-    dataset = HtDataset(base_dir)
+    # 创建文件路径列表
+    file_paths = []
+    if os.path.exists(base_dir):
+        for file_name in os.listdir(base_dir):
+            if file_name.endswith('.bin'):
+                file_paths.append(os.path.join(base_dir, file_name))
+    
+    dataset = HtDataset(file_paths)
     print(f"数据集大小: {len(dataset)}")
     
     # 获取第一个样本

@@ -22,3 +22,8 @@ rad.json
 TestResults.xml
 src/__pycache__
 src/checkpoints
+split/
+results/
+datasets/
+.trae/
+5-冲激恢复信号/
